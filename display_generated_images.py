@@ -65,7 +65,7 @@ TEXT_HEIGHT = 30    # pixels
 
 
 def add_text_to_image(image, text):
-    chars_per_line = int(screen_width/17)
+    chars_per_line = screen_width // 17
     words = text.split(' ')
     text_lines = []
     current_line = ""
@@ -88,6 +88,28 @@ def add_text_to_image(image, text):
         # First add the black border, then add the white text on top
         cv2.putText(image, line, (0, text_pos_vert), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 6, cv2.LINE_AA)
         cv2.putText(image, line, (0, text_pos_vert), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    return image
+
+
+def scale_and_center_image(image):
+    """
+    Creates a black background, scales the image to fit the screen, and place it in the center of the screen.
+    """
+    # Create a black background to cover the entire screen
+    background = np.zeros((screen_height, screen_width, 3), dtype=np.uint8)
+
+    # Resize image to fit the screen, keeping the image ratio intact
+    scaling_x = screen_width / image.shape[1]
+    scaling_y = screen_height / image.shape[0]
+    scaling = min(scaling_x, scaling_y)
+    image = cv2.resize(image, (0, 0), fx=scaling, fy=scaling, interpolation=cv2.INTER_LINEAR)
+
+    # Calculate the position to center the image
+    x_position = (screen_width - image.shape[1]) // 2
+    y_position = (screen_height - image.shape[0]) // 2
+    # Paste the image on the black background at the calculated position
+    background[y_position:y_position + image.shape[0], x_position:x_position + image.shape[1]] = image
+    return background
 
 
 while True:
@@ -105,29 +127,15 @@ while True:
         image_path = os.path.join(IMAGE_DIRECTORY, image_shown)
         img = cv2.imread(image_path)
 
-        # Resize image to fit the screen
-        scaling_x = screen_width/img.shape[1]
-        scaling_y = screen_height/img.shape[0]
-        scaling = min(scaling_x, scaling_y)
-        img = cv2.resize(img, (0, 0), fx=scaling, fy=scaling, interpolation=cv2.INTER_LINEAR)
+    img = scale_and_center_image(img)
 
-    # Calculate the position to center the image
-    x_position = (screen_width - img.shape[1]) // 2
-    y_position = (screen_height - img.shape[0]) // 2
-
-    # Create a black canvas (background) with screen dimensions
-    background = np.zeros((screen_height, screen_width, 3), dtype=np.uint8)
-
-    # Paste the image on the black canvas at the calculated position
-    background[y_position:y_position + img.shape[0], x_position:x_position + img.shape[1]] = img
-
-    # Add the prompt that was used to the image
+    # Add the prompt that was used to generate the image
     if show_prompt:
         prompt = get_prompt(image_path)
-        add_text_to_image(background, prompt)
+        add_text_to_image(img, prompt)
 
     # Show the image
-    cv2.imshow("Generated image", background)
+    cv2.imshow("Generated image", img)
 
     processed_images = current_images
     # Wait for a short period before checking again
