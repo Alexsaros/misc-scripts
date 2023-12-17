@@ -59,10 +59,18 @@ def get_prompt(img_path):
         return prompt
 
 
+TEXT_HEIGHT = 30    # pixels
+
+
 def add_text_to_image(image, text):
-    # First add the black border, then add the white text on top
-    cv2.putText(image, text, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 6, cv2.LINE_AA)
-    cv2.putText(image, text, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    chars_per_line = 110
+    text_lines = [text[i:i+chars_per_line] for i in range(0, len(text), chars_per_line)]
+
+    for i, line in enumerate(text_lines, 1):
+        text_pos_vert = TEXT_HEIGHT * i
+        # First add the black border, then add the white text on top
+        cv2.putText(image, line, (0, text_pos_vert), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 6, cv2.LINE_AA)
+        cv2.putText(image, line, (0, text_pos_vert), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
 
 while True:
