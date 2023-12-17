@@ -1,21 +1,27 @@
 import os
-import time
 import cv2
 import numpy as np
 
-directory_to_watch = r"factorit_logos_selected"
+# Path to the directory where the generated images are located
+IMAGE_DIRECTORY = r"factorit_logos_selected"
 
 image_shown = ""
 processed_images = set()
 
-# Get screen dimensions
-screen_width, screen_height = 2560, 1440  # Adjust these values according to your screen resolution
+# Create a new fullscreen window
+cv2.namedWindow("Generated image", cv2.WND_PROP_FULLSCREEN)
+cv2.setWindowProperty("Generated image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+# Detect the screen resolution based on the fullscreen window's size
+window_dimensions = cv2.getWindowImageRect("Generated image")
+screen_width = window_dimensions[2]
+screen_height = window_dimensions[3]
 
 while True:
-    # List all files in the directory
-    current_files = os.listdir(directory_to_watch)
-    
+    # Get all images in the directory
+    current_files = os.listdir(IMAGE_DIRECTORY)
     images = [img_file for img_file in current_files if img_file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
+
     current_images = set(images)
     new_images = current_images-processed_images
 
@@ -23,7 +29,7 @@ while True:
         for i in new_images:
             image_shown = i
             break
-        img = cv2.imread(os.path.join(directory_to_watch, image_shown))
+        img = cv2.imread(os.path.join(IMAGE_DIRECTORY, image_shown))
 
         # Resize image to fit the screen
         scaling_x = screen_width/img.shape[1]
@@ -41,9 +47,6 @@ while True:
     # Paste the image on the black canvas at the calculated position
     background[y_position:y_position + img.shape[0], x_position:x_position + img.shape[1]] = img
 
-    # Create a new fullscreen window if it does not already exist
-    cv2.namedWindow("Generated image", cv2.WND_PROP_FULLSCREEN)
-    cv2.setWindowProperty("Generated image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     # Show the image
     cv2.imshow("Generated image", background)
 
