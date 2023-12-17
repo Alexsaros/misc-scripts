@@ -5,10 +5,10 @@ The images will be displayed in fullscreen, with any newly generated/added image
 Controls:
 Escape = stop the script
 """
-
 import os
 import cv2
 import numpy as np
+import json
 
 SUPPORTED_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".dib", ".webp", ".sr", ".ras", ".tiff", ".tif")
 
@@ -27,6 +27,38 @@ window_dimensions = cv2.getWindowImageRect("Generated image")
 screen_width = window_dimensions[2]
 screen_height = window_dimensions[3]
 
+
+def get_prompt(img_path):
+    with open(img_path, 'rb') as file:
+        # Check if the file is a PNG file by reading the first 8 bytes (PNG signature)
+        signature = file.read(8)
+        if signature[:8] != b'\x89PNG\r\n\x1a\n':
+            print("Not a valid PNG file")
+            return
+
+        metadata = {}
+        # Loop over each chunk in the image file
+        while True:
+            # Read the length of the current chunk
+            length_bytes = file.read(4)
+            if not length_bytes:
+                break
+            length = int.from_bytes(length_bytes, byteorder='big')
+
+            # Read info from the chunk
+            chunk_type = file.read(4).decode('ascii')
+            data = file.read(length)
+            crc = file.read(4)  # Cyclic Redundancy Check. Unused, but must be read
+
+            # If it's a tEXt chunk, extract the metadata dictionary
+            if chunk_type == 'tEXt':
+                key, value = data.split(b'\x00', 1)
+                metadata[key.decode('utf-8')] = json.loads(value)
+
+        prompt = ''.join(metadata['prompt']['6']['inputs']['text'])
+        return prompt
+
+
 while True:
     # Get all images in the directory
     files = os.listdir(IMAGE_DIRECTORY)
@@ -39,7 +71,8 @@ while True:
         for i in new_images:
             image_shown = i
             break
-        img = cv2.imread(os.path.join(IMAGE_DIRECTORY, image_shown))
+        image_path = os.path.join(IMAGE_DIRECTORY, image_shown)
+        img = cv2.imread(image_path)
 
         # Resize image to fit the screen
         scaling_x = screen_width/img.shape[1]
