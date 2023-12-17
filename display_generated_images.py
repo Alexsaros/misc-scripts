@@ -26,6 +26,8 @@ screen_width = window_dimensions[2]
 screen_height = window_dimensions[3]
 
 show_prompt = False
+current_image = ""
+display_new_images = True
 
 
 def get_prompt(img_path):
@@ -114,6 +116,22 @@ def get_file_creation_time(filename):
     return os.path.getctime(os.path.join(IMAGE_DIRECTORY, filename))
 
 
+def switch_image(images, select_previous=True):
+    """
+    Handles switching between images to display a previous/following image from the given list.
+    """
+    global current_image, display_new_images
+    image_index = images.index(current_image)
+    if select_previous:
+        image_index -= 1
+    else:
+        image_index += 1
+    image_index = np.clip(image_index, 0, len(images) - 1)
+    current_image = images[image_index]
+    # Only automatically show new images if the user is viewing the last image
+    display_new_images = True if image_index == len(images) else False
+
+
 while True:
     # Get all images in the directory
     files = os.listdir(IMAGE_DIRECTORY)
@@ -121,9 +139,10 @@ while True:
     # Sort images based on creation time
     image_names = sorted(image_names, key=get_file_creation_time)
 
-    # Get the latest image
-    latest_image = image_names[-1]
-    image_path = os.path.join(IMAGE_DIRECTORY, latest_image)
+    if display_new_images:
+        # Get the most recent image
+        current_image = image_names[-1]
+    image_path = os.path.join(IMAGE_DIRECTORY, current_image)
     img = cv2.imread(image_path)
 
     # Position the image
@@ -138,13 +157,18 @@ while True:
     cv2.imshow("Generated image", img)
 
     # Wait for a short period while handling input
-    key_input = cv2.waitKey(2000)
+    key_input = cv2.waitKeyEx(2000)
     # If the user pressed the escape key, quit the program
     if key_input == 27:
         break
     # If the user pressed space, toggle showing the prompt
     elif key_input == 32:
         show_prompt = not show_prompt
+    # If the user pressed the left or right arrow key, switch to a different picture
+    elif key_input == 2424832:  # Left
+        switch_image(image_names, select_previous=True)
+    elif key_input == 2555904:  # Right
+        switch_image(image_names, select_previous=False)
 
 cv2.destroyAllWindows()
 
