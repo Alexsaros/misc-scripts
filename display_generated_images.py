@@ -27,6 +27,8 @@ window_dimensions = cv2.getWindowImageRect("Generated image")
 screen_width = window_dimensions[2]
 screen_height = window_dimensions[3]
 
+show_prompt = False
+
 
 def get_prompt(img_path):
     with open(img_path, 'rb') as file:
@@ -105,8 +107,9 @@ while True:
     background[y_position:y_position + img.shape[0], x_position:x_position + img.shape[1]] = img
 
     # Add the prompt that was used to the image
-    prompt = get_prompt(image_path)
-    add_text_to_image(background, prompt)
+    if show_prompt:
+        prompt = get_prompt(image_path)
+        add_text_to_image(background, prompt)
 
     # Show the image
     cv2.imshow("Generated image", background)
@@ -117,6 +120,9 @@ while True:
     # If the user pressed the escape key, quit the program
     if key_input == 27:
         break
+    # If the user pressed space, toggle showing the prompt
+    elif key_input == 32:
+        show_prompt = not show_prompt
 
 cv2.destroyAllWindows()
 
