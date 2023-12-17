@@ -63,7 +63,7 @@ TEXT_HEIGHT = 30    # pixels
 
 
 def add_text_to_image(image, text):
-    chars_per_line = 110
+    chars_per_line = int(screen_width/17)
     text_lines = [text[i:i+chars_per_line] for i in range(0, len(text), chars_per_line)]
 
     for i, line in enumerate(text_lines, 1):
