@@ -59,6 +59,12 @@ def get_prompt(img_path):
         return prompt
 
 
+def add_text_to_image(image, text):
+    # First add the black border, then add the white text on top
+    cv2.putText(image, text, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 6, cv2.LINE_AA)
+    cv2.putText(image, text, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+
 while True:
     # Get all images in the directory
     files = os.listdir(IMAGE_DIRECTORY)
@@ -89,6 +95,10 @@ while True:
 
     # Paste the image on the black canvas at the calculated position
     background[y_position:y_position + img.shape[0], x_position:x_position + img.shape[1]] = img
+
+    # Add the prompt that was used to the image
+    prompt = get_prompt(image_path)
+    add_text_to_image(background, prompt)
 
     # Show the image
     cv2.imshow("Generated image", background)
