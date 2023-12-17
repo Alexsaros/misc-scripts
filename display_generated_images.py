@@ -66,7 +66,22 @@ TEXT_HEIGHT = 30    # pixels
 
 def add_text_to_image(image, text):
     chars_per_line = int(screen_width/17)
-    text_lines = [text[i:i+chars_per_line] for i in range(0, len(text), chars_per_line)]
+    words = text.split(' ')
+    text_lines = []
+    current_line = ""
+    # Ensure line wrapping happens between words, to prevent words from being cut off
+    for word in words:
+        # Just add the word if this is a new line
+        if not current_line:
+            current_line = word
+            continue
+        # If the word would make the line too long, start a new line
+        if len(current_line) + len(word) > chars_per_line:
+            text_lines.append(current_line)
+            current_line = word
+            continue
+        current_line += " " + word
+    text_lines.append(current_line)
 
     for i, line in enumerate(text_lines, 1):
         text_pos_vert = TEXT_HEIGHT * i
