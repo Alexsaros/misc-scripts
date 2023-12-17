@@ -4,6 +4,7 @@ The images will be displayed in fullscreen, with any newly generated/added image
 
 Controls:
 Escape = stop the script
+Space = toggle displaying the prompt
 """
 import os
 import cv2
