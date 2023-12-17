@@ -16,9 +16,6 @@ SUPPORTED_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".dib", ".webp", 
 # Path to the directory where the generated images are located
 IMAGE_DIRECTORY = r"factorit_logos_selected"
 
-image_shown = ""
-processed_images = set()
-
 # Create a new fullscreen window
 cv2.namedWindow("Generated image", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("Generated image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
@@ -113,21 +110,23 @@ def scale_and_center_image(image):
     return background
 
 
+def get_file_creation_time(filename):
+    return os.path.getctime(os.path.join(IMAGE_DIRECTORY, filename))
+
+
 while True:
     # Get all images in the directory
     files = os.listdir(IMAGE_DIRECTORY)
     image_names = [img_file for img_file in files if img_file.lower().endswith(SUPPORTED_IMAGE_EXTENSIONS)]
+    # Sort images based on creation time
+    image_names = sorted(image_names, key=get_file_creation_time)
 
-    current_images = set(image_names)
-    new_images = current_images-processed_images
+    # Get the latest image
+    latest_image = image_names[-1]
+    image_path = os.path.join(IMAGE_DIRECTORY, latest_image)
+    img = cv2.imread(image_path)
 
-    if len(new_images) > 0:
-        for i in new_images:
-            image_shown = i
-            break
-        image_path = os.path.join(IMAGE_DIRECTORY, image_shown)
-        img = cv2.imread(image_path)
-
+    # Position the image
     img = scale_and_center_image(img)
 
     # Add the prompt that was used to generate the image
@@ -138,9 +137,8 @@ while True:
     # Show the image
     cv2.imshow("Generated image", img)
 
-    processed_images = current_images
-    # Wait for a short period before checking again
-    key_input = cv2.waitKey(5000)
+    # Wait for a short period while handling input
+    key_input = cv2.waitKey(2000)
     # If the user pressed the escape key, quit the program
     if key_input == 27:
         break
