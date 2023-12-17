@@ -3,7 +3,7 @@ import time
 import cv2
 import numpy as np
 
-directory_to_watch = r"E:\factorit_logos_selected"
+directory_to_watch = r"factorit_logos_selected"
 
 image_shown = ""
 processed_images = set()
@@ -41,15 +41,18 @@ while True:
     # Paste the image on the black canvas at the calculated position
     background[y_position:y_position + img.shape[0], x_position:x_position + img.shape[1]] = img
 
-    # Create a new window if it does not already exist
-    cv2.namedWindow("cool image", cv2.WND_PROP_FULLSCREEN)
-    cv2.setWindowProperty("cool image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-    cv2.imshow("cool image", background)
+    # Create a new fullscreen window if it does not already exist
+    cv2.namedWindow("Generated image", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty("Generated image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    # Show the image
+    cv2.imshow("Generated image", background)
 
     processed_images = current_images
-
     # Wait for a short period before checking again
-    cv2.waitKey(5000)  # Checks every 5 seconds
+    key_input = cv2.waitKey(5000)
+    # If the user pressed the escape key, quit the program
+    if key_input == 27:
+        break
 
 cv2.destroyAllWindows()
 
