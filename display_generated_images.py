@@ -17,8 +17,10 @@ import json
 
 SUPPORTED_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".dib", ".webp", ".sr", ".ras", ".tiff", ".tif")
 
-# Path to the directory where the generated images are located
-IMAGE_DIRECTORY = r"factorit_logos_selected"
+# Path to the directory where the generated images are located. Leave empty to use script's directory
+IMAGE_DIRECTORY = r""
+if not IMAGE_DIRECTORY:
+    IMAGE_DIRECTORY = os.getcwd()
 
 # Create a new fullscreen window
 cv2.namedWindow("Generated image", cv2.WND_PROP_FULLSCREEN)
@@ -137,24 +139,29 @@ def switch_image(images, select_previous=True):
 
 
 while True:
-    # Get all images in the directory
-    files = os.listdir(IMAGE_DIRECTORY)
-    image_names = [img_file for img_file in files if img_file.lower().endswith(SUPPORTED_IMAGE_EXTENSIONS)]
+    # Get all images in the directory and its subdirectories
+    image_paths = []
+    for root, dirs, files in os.walk(IMAGE_DIRECTORY):
+        for name in files:
+            if name.lower().endswith(SUPPORTED_IMAGE_EXTENSIONS):
+                image_paths.append(os.path.join(root, name))
+    if not image_paths:
+        print("No images found in directory %s" % IMAGE_DIRECTORY)
+        break
     # Sort images based on creation time
-    image_names = sorted(image_names, key=get_file_creation_time)
+    image_paths = sorted(image_paths, key=get_file_creation_time)
 
     if display_new_images:
         # Get the most recent image
-        current_image = image_names[-1]
-    image_path = os.path.join(IMAGE_DIRECTORY, current_image)
-    img = cv2.imread(image_path)
+        current_image = image_paths[-1]
+    img = cv2.imread(current_image)
 
     # Position the image
     img = scale_and_center_image(img)
 
     # Add the prompt that was used to generate the image
     if show_prompt:
-        prompt = get_prompt(image_path)
+        prompt = get_prompt(current_image)
         add_text_to_image(img, prompt)
 
     # Show the image
@@ -170,9 +177,9 @@ while True:
         show_prompt = not show_prompt
     # If the user pressed the left or right arrow key, switch to a different picture
     elif key_input == 2424832:  # Left
-        switch_image(image_names, select_previous=True)
+        switch_image(image_paths, select_previous=True)
     elif key_input == 2555904:  # Right
-        switch_image(image_names, select_previous=False)
+        switch_image(image_paths, select_previous=False)
 
 cv2.destroyAllWindows()
 
