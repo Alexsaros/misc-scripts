@@ -38,6 +38,21 @@ show_prompt = False
 current_image = ""
 display_new_images = True
 
+PROMPT_CONTAINS = "text"
+
+
+def search_dict_for_prompt(dictionary):
+    if not isinstance(dictionary, dict):
+        return
+    for k, v in dictionary.items():
+        if isinstance(v, dict):
+            result = search_dict_for_prompt(v)
+            if result:
+                return result
+        elif isinstance(v, str):
+            if PROMPT_CONTAINS in k:
+                return v
+
 
 def get_prompt(img_path):
     with open(img_path, 'rb') as file:
@@ -66,10 +81,7 @@ def get_prompt(img_path):
                 key, value = data.split(b'\x00', 1)
                 metadata[key.decode('utf-8')] = json.loads(value)
 
-        try:
-            prompt = ''.join(metadata['prompt']['6']['inputs']['text'])
-        except KeyError:
-            prompt = ''.join(metadata['prompt']['1']['inputs']['text_positive'])
+        prompt = search_dict_for_prompt(metadata['prompt'])
         return prompt
 
 
