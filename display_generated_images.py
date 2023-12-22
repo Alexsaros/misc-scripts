@@ -30,6 +30,9 @@ cv2.setWindowProperty("Generated image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FUL
 window_dimensions = cv2.getWindowImageRect("Generated image")
 screen_width = window_dimensions[2]
 screen_height = window_dimensions[3]
+if screen_width == -1 or screen_height == -1:
+    screen_width = 1920
+    screen_height = 1080
 
 show_prompt = False
 current_image = ""
