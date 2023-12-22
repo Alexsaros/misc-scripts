@@ -63,12 +63,10 @@ def get_prompt(img_path):
                 key, value = data.split(b'\x00', 1)
                 metadata[key.decode('utf-8')] = json.loads(value)
 
-        print(metadata)
-        print(metadata['prompt'])
-        print(metadata['prompt']['6'])
-        print(metadata['prompt']['6']['inputs'])
-        print(metadata['prompt']['6']['inputs']['text'])
-        prompt = ''.join(metadata['prompt']['6']['inputs']['text'])
+        try:
+            prompt = ''.join(metadata['prompt']['6']['inputs']['text'])
+        except KeyError:
+            prompt = ''.join(metadata['prompt']['1']['inputs']['text_positive'])
         return prompt
 
 
