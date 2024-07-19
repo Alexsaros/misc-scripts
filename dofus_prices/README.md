@@ -1,0 +1,3 @@
+Created 2021
+
+Program which temporarily takes control of the user's computer to scroll through the current prices of all of Dofus' items, makes a screenshot of all of them, detects each name and price, and save this as a file. Also allows defining recipes for equipment, what ingredients they require and how much, and the stats range of the crafted equipment. Combining all this info, the program calculates what equipment would be the most profitable to craft and turn into runes, taking into account the price of its ingredients, the amount of runes possibly gained, and the price of runes, for each recipe.
