@@ -8,6 +8,7 @@ from sklearn.metrics import mean_squared_error
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import tkinter as tk
+from tkinter import messagebox
 from tkinter import scrolledtext
 import webbrowser
 
@@ -176,12 +177,24 @@ def show_post(post: dict, predicted_grade: float) -> None:
 
     def save_grade():
         grade = grade_entry.get()
+
+        if not grade.strip():  # If the grade field is empty or contains only spaces
+            tk.messagebox.showwarning("Input Error", "Please enter a grade.")
+            return  # Do nothing if no grade has been entered
+
+        try:
+            # Ensure a number has been entered
+            grade_float = float(grade)
+        except ValueError:
+            tk.messagebox.showwarning("Input Error", "Please enter a valid numeric grade.")
+            return  # If the grade is not a number, do nothing
+
         new_entry = pd.DataFrame({
             'id': [post['id']],
             'username': [post['username']],
             'title': [post['title']],
             'body': [post['body']],
-            'grade': [grade]
+            'grade': [grade_float]
         })
         new_entry.to_csv(CSV_FILE, mode='a', header=False, index=False)
         window.destroy()
