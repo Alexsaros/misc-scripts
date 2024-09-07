@@ -19,6 +19,13 @@ CSV_FILE = 'graded_posts.csv'
 SUBREDDITS = ["jokes"]
 
 
+def create_content(data) -> str:
+    """
+    Combines the title and body into a single string.
+    """
+    return data['title'] + "\n\n" + data["body"]
+
+
 def authenticate_reddit() -> praw.Reddit:
     """
     Authenticates and returns a Reddit instance using credentials from the .env file.
@@ -60,7 +67,8 @@ def initialize_vectorizer(data: pd.DataFrame) -> tuple[TfidfVectorizer, pd.DataF
     # Create the TF-IDF vectorizer that will ignore common English stop words
     vectorizer = TfidfVectorizer(stop_words='english')
     # Fit the vectorizer to the text data and transform it into a numerical format (sparse matrix)
-    tfidf_matrix = vectorizer.fit_transform(data['text'])
+    content = create_content(data)
+    tfidf_matrix = vectorizer.fit_transform(content)
 
     print("TF-IDF vectorizer initialized and dataset transformed.")
 
@@ -100,7 +108,7 @@ def get_new_posts(reddit: praw.Reddit, subreddits: list, limit: int = 100) -> li
         subreddits (list): List of subreddit names to retrieve posts from.
         limit (int): Maximum number of posts to retrieve per subreddit.
     Returns:
-        list[dict]: A list of posts containing the id, content, and URL.
+        list[dict]: A list of posts.
     """
     print("Fetching new posts from Reddit...")
     two_days_ago = datetime.utcnow() - timedelta(days=2)
@@ -111,7 +119,6 @@ def get_new_posts(reddit: praw.Reddit, subreddits: list, limit: int = 100) -> li
         for submission in reddit.subreddit(subreddit).new(limit=limit):
             post_time = datetime.utcfromtimestamp(submission.created_utc)
             if post_time >= two_days_ago:
-                content = submission.title + "\n\n" + submission.selftext
                 username = submission.author.name if submission.author else None
                 # Skip users who deleted their accounts
                 if username is None:
@@ -119,7 +126,8 @@ def get_new_posts(reddit: praw.Reddit, subreddits: list, limit: int = 100) -> li
                     continue
                 posts.append({
                     'id': submission.id,
-                    'content': content,
+                    'title': submission.title,
+                    'body': submission.selftext,
                     'url': submission.url,
                     'username': username
                 })
@@ -130,15 +138,15 @@ def get_new_posts(reddit: praw.Reddit, subreddits: list, limit: int = 100) -> li
 
 def is_in_csv(data: pd.DataFrame, post: dict) -> bool:
     """
-    Checks if the post's content already exists in the CSV file.
+    Checks if the post's body already exists in the CSV file.
     Args:
         data (pd.DataFrame): The dataset.
         post (dict): The Reddit post.
     Returns:
         bool: True if the post exists, False otherwise.
     """
-    post_text = post['content']
-    return data['text'].str.contains(post_text, regex=False).any()
+    post_text = post['body']
+    return data['body'].str.contains(post_text, regex=False).any()
 
 
 def grade_post(vectorizer: TfidfVectorizer, model: LinearRegression, post_text: str) -> float:
@@ -160,7 +168,7 @@ def show_post(post: dict, predicted_grade: float) -> None:
     """
     Displays a post in a Tkinter UI for manual grading.
     Args:
-        post (dict): The Reddit post data (id, content, URL).
+        post (dict): The Reddit post data.
         predicted_grade (float): The grade predicted by the AI model.
     """
     def open_link():
@@ -170,9 +178,10 @@ def show_post(post: dict, predicted_grade: float) -> None:
         grade = grade_entry.get()
         new_entry = pd.DataFrame({
             'id': [post['id']],
-            'text': [post['content']],
-            'grade': [grade],
-            'username': [post['username']]
+            'username': [post['username']],
+            'title': [post['title']],
+            'body': [post['body']],
+            'grade': [grade]
         })
         new_entry.to_csv(CSV_FILE, mode='a', header=False, index=False)
         window.destroy()
@@ -193,7 +202,8 @@ def show_post(post: dict, predicted_grade: float) -> None:
 
     # Create a scrolled text widget for the post content
     content_text = scrolledtext.ScrolledText(frame, wrap=tk.WORD, height=15)
-    content_text.insert(tk.END, f"Post Content:\n{post['content']}")
+    content = create_content(post)
+    content_text.insert(tk.END, f"Post Content:\n{content}")
     content_text.config(state=tk.DISABLED)
     content_text.pack(expand=True, fill=tk.BOTH)
 
@@ -239,7 +249,8 @@ def main():
         if not is_in_csv(data, post):
             score = 0
             if model is not None:
-                score = grade_post(vectorizer, model, post['content'])
+                content = create_content(post)
+                score = grade_post(vectorizer, model, content)
             scored_posts.append((post, score))
 
     # Sort posts from highest to lowest predicted grade
