@@ -20,11 +20,16 @@ CSV_FILE = 'graded_posts.csv'
 SUBREDDITS = ["jokes"]
 
 
-def create_content(data) -> str:
+def create_content(post: dict) -> str:
     """
-    Combines the title and body into a single string.
+    Combines the post's title and body into a single string.
+
+    Args:
+        post (dict): The Reddit post.
+    Returns:
+        str: contains the post's body and title.
     """
-    return data['title'] + "\n\n" + data["body"]
+    return post['title'] + "\n\n" + post["body"]
 
 
 def authenticate_reddit() -> praw.Reddit:
@@ -48,7 +53,12 @@ def load_dataset() -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing the dataset.
     """
     print(f"Loading dataset from {CSV_FILE}...")
+    # Load the dataset
     data = pd.read_csv(CSV_FILE)
+
+    # Replace NaN values with empty strings
+    data = data.fillna('')
+
     print(f"Dataset loaded. {len(data)} records found.")
     return data
 
@@ -68,7 +78,7 @@ def initialize_vectorizer(data: pd.DataFrame) -> tuple[TfidfVectorizer, pd.DataF
     # Create the TF-IDF vectorizer that will ignore common English stop words
     vectorizer = TfidfVectorizer(stop_words='english')
     # Fit the vectorizer to the text data and transform it into a numerical format (sparse matrix)
-    content = create_content(data)
+    content = data['title'] + "\n\n" + data['body']
     tfidf_matrix = vectorizer.fit_transform(content)
 
     print("TF-IDF vectorizer initialized and dataset transformed.")
@@ -196,6 +206,10 @@ def show_post(post: dict, predicted_grade: float) -> None:
             'body': [post['body']],
             'grade': [grade_float]
         })
+
+        # Ensure no NaN values are written to CSV
+        new_entry = new_entry.fillna('')
+
         new_entry.to_csv(CSV_FILE, mode='a', header=False, index=False)
         window.destroy()
 
@@ -224,7 +238,6 @@ def show_post(post: dict, predicted_grade: float) -> None:
 
     tk.Button(window, text="Open Post", command=open_link).pack()
 
-
     # Manual grading UI
     tk.Label(window, text="Enter your grade:").pack()
     grade_entry = tk.Entry(window)
@@ -250,8 +263,8 @@ def main():
     try:
         vectorizer, tfidf_matrix = initialize_vectorizer(data)
         model = train_model(tfidf_matrix, data['grade'])
-    except ValueError:
-        pass
+    except ValueError as e:
+        print("Failed to initialize vectorizer or train model: " + str(e))
 
     # Fetch new posts from Reddit
     new_posts = get_new_posts(reddit, SUBREDDITS)
