@@ -222,8 +222,13 @@ def main():
 
     # Load dataset and train model
     data = load_dataset()
-    vectorizer, tfidf_matrix = initialize_vectorizer(data)
-    model = train_model(tfidf_matrix, data['grade'])
+    vectorizer = None
+    model = None
+    try:
+        vectorizer, tfidf_matrix = initialize_vectorizer(data)
+        model = train_model(tfidf_matrix, data['grade'])
+    except ValueError:
+        pass
 
     # Fetch new posts from Reddit
     new_posts = get_new_posts(reddit, SUBREDDITS)
@@ -232,7 +237,9 @@ def main():
     scored_posts = []
     for post in new_posts:
         if not is_in_csv(data, post):
-            score = grade_post(vectorizer, model, post['content'])
+            score = 0
+            if model is not None:
+                score = grade_post(vectorizer, model, post['content'])
             scored_posts.append((post, score))
 
     # Sort posts from highest to lowest predicted grade
