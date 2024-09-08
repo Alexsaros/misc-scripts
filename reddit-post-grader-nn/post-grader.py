@@ -138,7 +138,7 @@ def get_new_posts(reddit: praw.Reddit, subreddits: list, limit: int = 100) -> li
                 posts.append({
                     'id': submission.id,
                     'title': submission.title,
-                    'body': submission.selftext,
+                    'body': submission.selftext.strip(),
                     'url': submission.url,
                     'username': username
                 })
