@@ -149,15 +149,15 @@ def get_new_posts(reddit: praw.Reddit, subreddits: list, limit: int = 100) -> li
 
 def is_in_csv(data: pd.DataFrame, post: dict) -> bool:
     """
-    Checks if the post's body already exists in the CSV file.
+    Checks if the post's user already exists in the CSV file.
     Args:
         data (pd.DataFrame): The dataset.
         post (dict): The Reddit post.
     Returns:
         bool: True if the post exists, False otherwise.
     """
-    post_text = post['body']
-    return data['body'].str.contains(post_text, regex=False).any()
+    post_text = post['username']
+    return data['username'].str.contains(post_text, regex=False).any()
 
 
 def grade_post(vectorizer: TfidfVectorizer, model: LinearRegression, post_text: str) -> float:
